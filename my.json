@@ -1,0 +1,15 @@
+{
+    "views": 16,
+    "urls": 6,
+    "traffic": 187990,
+    "crawlers": {
+        "Google": 2,
+        "Bing": 0,
+        "baidu": 0,
+        "yandex": 1
+    },
+    "status_code": {
+        "200": 14,
+        "301": 2
+    }
+}

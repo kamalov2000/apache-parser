@@ -1,65 +1,48 @@
 <?php
 $time_start = microtime(true);
 
-$filename = __DIR__ . './text.txt';
-
-//function checkFile($path_to_file)
-//{
-//    if (file_exists($path_to_file) && file_get_contents($path_to_file)) {
-//        $data_log_file = file_get_contents($path_to_file);
-//    } else {
-//        echo 'Файл по такому пути не существует';
-//    }
-//    echo "<pre>";
-//    getFileData($data_log_file);
-//
-////    return $data_log_file;
-//
-//}
-//
-//function getFileData($path)
-//{
-//    $data = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-//
-////    getArrayFromData($data);
-//
-////    return $data;
-//
-//}
-
-
-function oneMillinString()
+function checkFile()
 {
-    $handle = fopen("example.txt", "r");
+    if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+      $data['name'] = $_POST['firstName'];
+    }
 
-//    $array_100_element = [];
-//    if ($handle) {
-//        while (($line = fgets($handle)) !== false) {
-//            $total_lines++;
-//            $array_100_element[] = $line;
-//            if ($total_lines = 10) {
-//                foreach ($array_100_element as $dat) {
-////                    getParseLog($dat);
-//
-//                }
-//            }
-//            if(strlen($line) <= 30) {
-//                $short_lines++;
-//            }
-//        }
-//
-//echo "<pre>";
-//        fclose($handle);
-//    }
+    $path_to_file = __DIR__ . './' . $data['name'];
+
+    if (file_exists($path_to_file) && file_get_contents($path_to_file)) {
+      echo "<pre>";
+      getFileData($path_to_file);
+
+      $j = file_get_contents( __DIR__ . DIRECTORY_SEPARATOR . 'my.json' );
+      $data = json_encode(json_decode($j), JSON_PRETTY_PRINT);
+
+      echo '<pre>' . $data . '</pre>';
+    } else {
+        echo 'Файл по такому пути не существует';
+        die;
+    }
+
+}
+
+function getFileData($path)
+{
+    $handle = fopen($path, "r");
+
+    processingOneMillinString($handle);
 
 
-    if ($handle) {
+    return $handle;
+}
+
+function processingOneMillinString($resource_id)
+{
+    if ($resource_id) {
         $i = 0;
-//        $new = [];
-        while (($buffer = fgets($handle, 4096))) {
+        $new = [];
+        while (($buffer = fgets($resource_id, 4096))) {
             $new[$i] = $buffer;
             ++$i;
-            if ($i > 20000) {
+            if ($i > 200000) {
                 getParseLog($new);
                 $i = 0;
                 $new = [];
@@ -68,70 +51,21 @@ function oneMillinString()
         }
         getParseLog($new);
     }
+
 }
-oneMillinString();
-
-//function getArrayFromData($data_result)
-//{
-//    $filename = __DIR__ . '/example.txt';
-//
-//    $handle = fopen($filename, "r");
-//
-//    $result_array_buffer = [];
-//
-//    if ($handle) {
-//
-//        while (($buffer = fgets($handle, 4096)) !== false) {
-//            $result_array_buffer[] = explode(' ', $buffer);
-//
-//        }
-//
-//        if (!feof($handle)) {
-//            echo "Ошибка: fgets() неожиданно потерпел неудачу\n";
-//        }
-//        fclose($handle);
-//    }
-//
-//    getParseLog($result_array_buffer);
-//
-////    return $result_array_data;
-//
-//}
-
-//function lines($file)
-//{
-//    // в начале ищем сам файл. Может быть, путь к нему был некорректно указан
-//    if(!file_exists($file))exit("Файл не найден");
-//    $a = file_get_contents($file);
-//    // рассмотрим файл как массив
-//    $file_arr = file($file);
-////    for ($i = 0; $i < 1; ++$i) {
-////        file_put_contents($file, $a, FILE_APPEND);
-////    }
-//    // подсчитываем количество строк в массиве
-//    $lines = count($file_arr);
-//
-//    // вывод результата работы функции
-//    return $lines;
-//
-//}
-//
-//echo lines("example_copy.txt"); // выводим число - количество строк в файле index.php
 
 function getParseLog($array_result)
 {
-
-    global $array;
-
-//    $time_start = microtime(true);
+    global $last_array;
+    global $array_urls;
+    global $array_urls_2;
 
     $count_string = sizeof($array_result);
     $array_urls = [];
     $result = [];
-    $summ_traffic = 0;
+    $sum_traffic = 0;
     $status_code_200 = 0;
     $status_code_301 = 0;
-    $count_urls = 0;
     $count_google = 0;
     $count_Bing = 0;
     $count_baidu = 0;
@@ -160,63 +94,102 @@ function getParseLog($array_result)
             ++$count_yandex;
         }
 
-        $result['views'] = $count_string;
+       $result['views'] = $count_string;
 
         if (!in_array($broken_array[6], $array_urls)) {
-            $array_urls[] = $broken_array[6];
-            ++$count_urls;
+            $array_urls[] = $broken_array[6]; // сохранить урл для подсчета
         }
 
-        $result['urls'] = $count_urls;
+       $result['urls'] = $array_urls;
 
-        if ($broken_array[8] == '200') {
-            $summ_traffic += (int)$broken_array[9];
-        }
+       if ($broken_array[8] == '200') {
+           $sum_traffic += (int)$broken_array[9];
+       }
 
-        $result['traffic'] = $summ_traffic;
+       $result['traffic'] = $sum_traffic;
+
         $result['crawlers'] = [
             'Google' => $count_google,
             'Bing' => $count_Bing,
             'baidu' => $count_baidu,
             'yandex' => $count_yandex,
         ];
+
         $result['status_code'] = [
         '200' => $status_code_200,
         '301' => $status_code_301,
         ];
 
-
-
     }
 
+    $last_array[] = $result;
 
-
-//print_r($result);
-
-    $array[] = $result;
-
-    echo "<pre>";
-//    print_r($array);
-    echo "</pre>";
-//    $time = microtime(true) - $time_start;
-//    print_r($time);
-    createJson($array);
-    return $array;
-
-
+    formationOfTheLastArray($last_array);
 
 }
 
+function formationOfTheLastArray($resulting_array)
+{
+    $final_array = [];
+    $array_urls_2 = [];
+
+    foreach ($resulting_array as $key => $value) {
+      $unique = array_unique($value['urls']);
+      $resulting_array[$key]['urls'] = $unique;
+
+      if ( !in_array($resulting_array[$key]['urls'], $array_urls_2) ) {
+        $array_urls_2[] = $resulting_array[$key]['urls'];
+      }
+    }
+
+    $merge_urls = array_merge(...$array_urls_2);
+    $uniaue_urls = array_unique($merge_urls);
+    $count_urls = sizeof($uniaue_urls);
+
+
+    foreach ($resulting_array as $all_arrays) {
+
+        foreach ($all_arrays as $key_array => $value_array) {
+
+          if ( is_numeric($value_array) ) {
+            if ( isset($final_array[$key_array]) ) {
+                $final_array[$key_array] = $final_array[$key_array] + $value_array;
+            } else {
+                $final_array[$key_array] = $value_array;
+            }
+          }
+
+          if( is_array($value_array) ) {
+            foreach ($value_array as $type => $score) {
+                if ( isset($final_array[$key_array][$type]) ) {
+                    $final_array[$key_array][$type] += (int) $score;
+                } else {
+                    $final_array[$key_array][$type] = (int) $score;
+                }
+            }
+          }
+
+        }
+
+    }
+
+    $final_array['urls'] = $count_urls;
+
+    createJson($final_array);
+
+
+    return $resulting_array;
+}
 
 function createJson($data_5)
 {
     $post_data = file_put_contents('./my.json', json_encode($data_5, JSON_PRETTY_PRINT | JSON_PRESERVE_ZERO_FRACTION));
-//    return $post_data;
+
 }
 
-//checkFile($filename);
+checkFile();
 
-//$get_file_data = getFileData($file_name);
-//getArrayFromData($data);
 $time = microtime(true) - $time_start;
+echo "<pre>";
+echo "А вот и время выполнения ";
 print_r($time);
